@@ -1,0 +1,5 @@
+﻿{
+  "name": "My-Money-Map",
+  "description": "A Fintech MVP for tracking crypto portfolios, generating AI investment suggestions, and simulating transactions using Supabase Edge Functions and Gemini API.",
+  "requestFramePermissions": []
+}
