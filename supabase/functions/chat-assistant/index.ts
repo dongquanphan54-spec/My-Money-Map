@@ -17,23 +17,11 @@ serve(async (req) => {
       throw new Error("GEMINI_API_KEY is not set");
     }
 
-    const { message, context } = await req.json();
-    const { portfolio, cashBalance, prices } = context || {};
+    // 👉 chỉ lấy message, không context
+    const { message } = await req.json();
 
-    const prompt = "Say hello in one sentence.";
-
-User data:
-- Cash balance: ${cashBalance ?? 0}
-- Portfolio: ${JSON.stringify(portfolio)}
-- Prices: ${JSON.stringify(prices)}
-
-Rules:
-- Explain clearly
-- No buy/sell advice
-
-User question:
-${message}
-`;
+    // 👉 prompt đơn giản để test engine
+    const prompt = "Say hello in one short sentence.";
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
