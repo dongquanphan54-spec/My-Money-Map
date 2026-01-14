@@ -46,8 +46,11 @@ Style:
         body: JSON.stringify({
           contents: [
             {
-              role: "user",
-              parts: [{ text: `${systemInstruction}\n\nUser message: ${message}` }],
+              parts: [
+		{
+		{ text: `${systemInstruction}\n\nUser message: ${message}`,
+		},
+	      ],
             },
           ],
         }),
@@ -58,8 +61,9 @@ Style:
     console.log("Gemini raw response:", JSON.stringify(data));
 
     const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ??
-      "No response from Gemini";
+      data?.candidates?.[0]?.content?.parts
+    ?.map((p: any) => p.text)
+    ?.join("") || "No response from Gemini";
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
