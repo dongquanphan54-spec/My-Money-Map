@@ -2,7 +2,8 @@
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
@@ -19,37 +20,39 @@ serve(async (req) => {
     const { message, context } = await req.json();
     const { portfolio, cashBalance, prices } = context || {};
 
-    const systemInstruction = `
-You are the intelligent financial assistant for "My-Money-Map", a crypto simulation app.
+    const userPrompt = `
+You are a helpful financial assistant for a crypto simulation app called "My-Money-Map".
 
-User's Live Data Context:
-- Cash Balance: $${cashBalance?.toFixed(2) || "0.00"}
-- Crypto Portfolio: ${JSON.stringify(portfolio)}
-- Current Market Prices: ${JSON.stringify(prices)}
+User data:
+- Cash balance: ${cashBalance ?? 0}
+- Portfolio: ${JSON.stringify(portfolio)}
+- Market prices: ${JSON.stringify(prices)}
 
-Your Role:
-1. Answer questions about the user's specific balance and holdings using the data above.
-2. Explain financial concepts simply and clearly.
-3. Guide the user on how to use the app tools.
+Rules:
+- Explain things clearly and simply
+- Do NOT give buy/sell advice
+- If asked about total balance, include cash + crypto value
 
-Style:
-- Concise, friendly, and professional.
-- If asked for total balance, sum cash + crypto value.
-- Never give specific "buy/sell" financial advice, only analysis.
+User question:
+${message}
 `;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           contents: [
             {
+              role: "user",
               parts: [
-		{ text: `${systemInstruction}\n\nUser message: ${message}`,
-		},
-	      ],
+                {
+                  text: userPrompt,
+                },
+              ],
             },
           ],
         }),
@@ -61,8 +64,8 @@ Style:
 
     const reply =
       data?.candidates?.[0]?.content?.parts
-    ?.map((p: any) => p.text)
-    ?.join("") || "No response from Gemini";
+        ?.map((p: any) => p.text)
+        ?.join("") || "No response from Gemini";
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
