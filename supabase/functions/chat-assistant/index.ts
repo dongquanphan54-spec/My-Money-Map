@@ -39,7 +39,7 @@ Style:
 `;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,6 +55,7 @@ Style:
     );
 
     const data = await response.json();
+    console.log("Gemini raw response:", JSON.stringify(data));
 
     const reply =
       data.candidates?.[0]?.content?.parts?.[0]?.text ??
