@@ -47,7 +47,6 @@ Style:
           contents: [
             {
               parts: [
-		{
 		{ text: `${systemInstruction}\n\nUser message: ${message}`,
 		},
 	      ],
