@@ -20,8 +20,7 @@ serve(async (req) => {
     const { message, context } = await req.json();
     const { portfolio, cashBalance, prices } = context || {};
 
-    const prompt = `
-You are a financial assistant for a crypto simulation app called "My-Money-Map".
+    const prompt = "Say hello in one sentence.";
 
 User data:
 - Cash balance: ${cashBalance ?? 0}
