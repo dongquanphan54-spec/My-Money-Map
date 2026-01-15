@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   UserCircle, 
   Wallet, 
@@ -77,16 +77,16 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isChatOpen]);
 
-  const calculateTotalValue = () => {
-    let cryptoValue = 0;
-    if (prices) {
-      cryptoValue = portfolio.reduce((acc, item) => {
-        const price = prices[item.id]?.usd || 0;
-        return acc + (price * item.amount);
-      }, 0);
-    }
-    return cryptoValue + cashBalance;
-  };
+  const totalValue = useMemo(() => {
+  if (!prices) return cashBalance;
+
+  const cryptoValue = portfolio.reduce((acc, item) => {
+    const price = prices[item.id]?.usd ?? 0;
+    return acc + price * item.amount;
+  }, 0);
+
+  return cryptoValue + cashBalance;
+}, [portfolio, cashBalance, prices]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,28 +125,28 @@ export default function App() {
   };
 
   const handleGenerateSuggestion = async () => {
-    if (!prices) return;
-    setLoadingSuggestion(true);
-    try {
-      const totalValue = calculateTotalValue();
-      const portfolioData = portfolio.map(p => ({
-        ...p,
-        currentPrice: prices[p.id]?.usd,
-        value: (prices[p.id]?.usd || 0) * p.amount
-      }));
-      
-      const suggestionText = await generateAiSuggestion({
-        portfolio: portfolioData,
-        totalValue
-      });
-      setSuggestion(suggestionText);
-    } catch (error) {
-      console.error("Error generating suggestion", error);
-      setSuggestion("Could not generate suggestion at this time.");
-    } finally {
-      setLoadingSuggestion(false);
-    }
-  };
+  if (!prices) return;
+  setLoadingSuggestion(true);
+  try {
+    const portfolioData = portfolio.map(p => ({
+      ...p,
+      currentPrice: prices[p.id]?.usd,
+      value: (prices[p.id]?.usd || 0) * p.amount
+    }));
+    
+    const suggestionText = await generateAiSuggestion({
+      portfolio: portfolioData,
+      totalValue   
+    });
+    setSuggestion(suggestionText);
+  } catch (error) {
+    console.error("Error generating suggestion", error);
+    setSuggestion("Could not generate suggestion at this time.");
+  } finally {
+    setLoadingSuggestion(false);
+  }
+};
+
 
   const handleInvest = (e: React.FormEvent) => {
     e.preventDefault();
@@ -291,7 +291,6 @@ export default function App() {
   }
 
   // --- DASHBOARD ---
-  const totalValue = calculateTotalValue();
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12 relative">
