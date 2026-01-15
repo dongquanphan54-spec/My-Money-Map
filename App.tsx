@@ -51,19 +51,16 @@ export default function App() {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const loadPrices = useCallback(async () => {
-    setLoadingPrices(true);
-    try {
-      const data = await fetchCryptoPrices();
-      if (data) {
-        setPrices(data);
-      }
-    } catch (error) {
-      console.error("Failed to load prices", error);
-    } finally {
-      setLoadingPrices(false);
-    }
-  }, []);
+const loadPrices = useCallback(async () => {
+  setLoadingPrices(true);
+  try {
+    const data = await fetchCryptoPrices();
+    if (data) setPrices(data);
+  } finally {
+    setLoadingPrices(false);
+  }
+}, []);
+
 
   useEffect(() => {
     if (user) {
@@ -77,16 +74,14 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isChatOpen]);
 
-  const totalValue = useMemo(() => {
-  if (!prices) return cashBalance;
+  const cryptoValue = prices
+  ? portfolio.reduce((acc, item) => {
+      const price = prices[item.id]?.usd ?? 0;
+      return acc + price * item.amount;
+    }, 0)
+  : 0;
 
-  const cryptoValue = portfolio.reduce((acc, item) => {
-    const price = prices[item.id]?.usd ?? 0;
-    return acc + price * item.amount;
-  }, 0);
-
-  return cryptoValue + cashBalance;
-}, [portfolio, cashBalance, prices]);
+const totalValue = cryptoValue + cashBalance;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,7 +119,8 @@ export default function App() {
     });
   };
 
-  const handleGenerateSuggestion = async () => {
+
+ const handleGenerateSuggestion = async () => {
   if (!prices) return;
   setLoadingSuggestion(true);
   try {
@@ -133,19 +129,24 @@ export default function App() {
       currentPrice: prices[p.id]?.usd,
       value: (prices[p.id]?.usd || 0) * p.amount
     }));
-    
+
+    const totalValueNow =
+      portfolio.reduce(
+        (acc, item) => acc + (prices[item.id]?.usd || 0) * item.amount,
+        0
+      ) + cashBalance;
+
     const suggestionText = await generateAiSuggestion({
       portfolio: portfolioData,
-      totalValue   
+      totalValue: totalValueNow
     });
+
     setSuggestion(suggestionText);
-  } catch (error) {
-    console.error("Error generating suggestion", error);
-    setSuggestion("Could not generate suggestion at this time.");
   } finally {
     setLoadingSuggestion(false);
   }
 };
+
 
 
   const handleInvest = (e: React.FormEvent) => {
@@ -186,14 +187,15 @@ export default function App() {
     // Deduct Cash
     setCashBalance(prev => prev - amount);
 
+setPortfolio(prev =>
+  prev.map(item =>
+    item.id === investAsset
+      ? { ...item, amount: item.amount + amount / prices[investAsset].usd }
+      : item
+  )
+);
+
     // Add Crypto
-    const coinAmount = amount / prices[investAsset].usd;
-    setPortfolio(prev => prev.map(item => {
-      if (item.id === investAsset) {
-        return { ...item, amount: item.amount + coinAmount };
-      }
-      return item;
-    }));
     
     setTransactionStatus({ 
       type: 'success', 
